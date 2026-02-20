@@ -1,0 +1,12 @@
+{
+  "name": "rahmatnugraha-top",
+  "private": true,
+  "scripts": {
+    "cf:login": "wrangler login",
+    "cf:deploy": "wrangler pages deploy . --project-name=$CLOUDFLARE_PAGES_PROJECT_NAME"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}
+
