@@ -20,5 +20,5 @@ jobs:
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: 4de3436df33988a5d600e81f66cb4d26
+          accountId: 6249e7f646bddba67579106942d7506d
           command: pages deploy . --project-name=rahmatnugraha
