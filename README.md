@@ -45,3 +45,27 @@ Use an API token with at least:
 
 - `Account - Cloudflare Pages: Edit`
 
+## 4) Resume lead capture setup (D1 + Pages Functions)
+
+1. Create a D1 database:
+   ```bash
+   npx wrangler d1 create resume-leads
+   ```
+2. Update `wrangler.toml`:
+   - Replace `database_id = "REPLACE_WITH_D1_DATABASE_ID"` with your generated id.
+3. Apply migrations:
+   ```bash
+   npx wrangler d1 migrations apply resume-leads --remote
+   ```
+4. Set required secrets:
+   ```bash
+   npx wrangler pages secret put TURNSTILE_SECRET_KEY
+   npx wrangler pages secret put LEADS_IP_SALT
+   npx wrangler pages secret put TELEGRAM_BOT_TOKEN
+   npx wrangler pages secret put TELEGRAM_CHAT_ID
+   ```
+5. Turnstile site key:
+   - Update the `data-sitekey` value in `about.html` from test key (`1x00000000000000000000AA`) to your production key.
+6. Add a Cloudflare rate limiting rule:
+   - Path: `/api/resume-lead`
+   - Rule: throttle aggressive repeated requests from same IP.

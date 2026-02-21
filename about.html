@@ -6,7 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>About — Rahmat Nugraha</title>
     <link rel="icon" type="image/svg+xml" href="./favicon.svg">
-    <link href="./css/style.css?v=2" rel="stylesheet">
+    <link href="./css/style.css?v=3" rel="stylesheet">
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
 
 <body>
@@ -347,7 +348,7 @@
                     </section>
 
                     <div class="cta-wrap fade-in delay-4" style="margin-top: 4rem;">
-                        <a href="https://resume.rahmatnugraha.top/" target="_blank" class="cta-button">
+                        <a href="https://resume.rahmatnugraha.top/" class="cta-button" id="resumeCta">
                             <span>View full detailed resume ↗</span>
                         </a>
                     </div>
@@ -364,6 +365,43 @@
                 <a href="https://linkedin.com/in/rahmatnugr" target="_blank">LinkedIn</a>
             </div>
         </footer>
+    </div>
+
+    <div class="lead-modal" id="resumeLeadModal" hidden>
+        <div class="lead-modal-backdrop" data-action="skip"></div>
+        <div class="lead-modal-panel" role="dialog" aria-modal="true" aria-labelledby="leadModalTitle"
+            aria-describedby="leadModalDescription">
+            <button class="lead-modal-close" id="leadModalClose" type="button"
+                aria-label="Close and continue">✕</button>
+            <h2 id="leadModalTitle">Before viewing full resume</h2>
+            <p id="leadModalDescription">Share your email so I can follow up regarding potential hiring opportunities.
+            </p>
+
+            <form id="resumeLeadForm" novalidate>
+                <label class="lead-modal-label" for="leadEmail">Work email</label>
+                <input type="email" id="leadEmail" name="email" class="lead-modal-input" placeholder="name@company.com"
+                    autocomplete="email" required>
+
+                <input type="text" id="companyWebsite" name="companyWebsite" class="lead-modal-honeypot"
+                    autocomplete="off" tabindex="-1" aria-hidden="true">
+
+                <label class="lead-modal-consent">
+                    <input type="checkbox" id="leadConsent" name="consent" required>
+                    <span>I agree this email may be used for hiring follow-up.</span>
+                </label>
+
+                <div class="cf-turnstile" data-sitekey="0x4AAAAAACgKSAkSQLe9TN6f" data-theme="auto"></div>
+
+                <p class="lead-modal-error" id="leadModalError" role="alert" aria-live="polite"></p>
+
+                <div class="lead-modal-actions">
+                    <button type="submit" class="cta-button lead-submit-btn">
+                        <span>Submit & Continue</span>
+                    </button>
+                    <button type="button" class="lead-skip-btn" id="leadSkipBtn">Skip & Continue</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <script>
@@ -398,6 +436,159 @@
         });
 
         document.getElementById('year').textContent = new Date().getFullYear();
+
+        const resumeCta = document.getElementById('resumeCta');
+        const leadModal = document.getElementById('resumeLeadModal');
+        const leadModalClose = document.getElementById('leadModalClose');
+        const leadSkipBtn = document.getElementById('leadSkipBtn');
+        const leadForm = document.getElementById('resumeLeadForm');
+        const leadEmail = document.getElementById('leadEmail');
+        const leadConsent = document.getElementById('leadConsent');
+        const leadModalError = document.getElementById('leadModalError');
+
+        const RESUME_LEAD_STORAGE_KEY = 'resumeLeadSubmittedAt';
+        const RESUME_LEAD_COOLDOWN_MS = 24 * 60 * 60 * 1000;
+        let resumeTargetUrl = resumeCta.href;
+        let lastFocusedElement = null;
+
+        function shouldSkipLeadGate() {
+            const submittedAt = Number(localStorage.getItem(RESUME_LEAD_STORAGE_KEY) || '0');
+            return Number.isFinite(submittedAt) && submittedAt > 0 && (Date.now() - submittedAt) < RESUME_LEAD_COOLDOWN_MS;
+        }
+
+        function redirectToResume() {
+            window.location.href = resumeTargetUrl;
+        }
+
+        function setLeadError(message) {
+            leadModalError.textContent = message || '';
+        }
+
+        function trapFocus(event) {
+            if (event.key !== 'Tab' || leadModal.hidden) return;
+            const focusable = leadModal.querySelectorAll('button, input, [href], [tabindex]:not([tabindex="-1"])');
+            const first = focusable[0];
+            const last = focusable[focusable.length - 1];
+            if (!first || !last) return;
+            if (event.shiftKey && document.activeElement === first) {
+                event.preventDefault();
+                last.focus();
+            } else if (!event.shiftKey && document.activeElement === last) {
+                event.preventDefault();
+                first.focus();
+            }
+        }
+
+        function openLeadModal() {
+            lastFocusedElement = document.activeElement;
+            leadModal.hidden = false;
+            document.body.classList.add('lead-modal-open');
+            setLeadError('');
+            setTimeout(() => leadEmail.focus(), 0);
+        }
+
+        function closeLeadModal(shouldRedirect = false) {
+            leadModal.hidden = true;
+            document.body.classList.remove('lead-modal-open');
+            if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
+                lastFocusedElement.focus();
+            }
+            if (shouldRedirect) {
+                redirectToResume();
+            }
+        }
+
+        resumeCta.addEventListener('click', (event) => {
+            resumeTargetUrl = resumeCta.href;
+            if (shouldSkipLeadGate()) {
+                return;
+            }
+            event.preventDefault();
+            openLeadModal();
+        });
+
+        leadModal.addEventListener('click', (event) => {
+            const action = event.target?.getAttribute('data-action');
+            if (action === 'skip') {
+                closeLeadModal(true);
+            }
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (leadModal.hidden) return;
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                closeLeadModal(true);
+            } else {
+                trapFocus(event);
+            }
+        });
+
+        leadSkipBtn.addEventListener('click', () => closeLeadModal(true));
+        leadModalClose.addEventListener('click', () => closeLeadModal(true));
+
+        leadForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            setLeadError('');
+
+            const email = leadEmail.value.trim().toLowerCase();
+            const consent = leadConsent.checked;
+            const honeypot = document.getElementById('companyWebsite').value.trim();
+            const turnstileToken = window.turnstile?.getResponse?.();
+
+            if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                setLeadError('Please enter a valid work email address.');
+                return;
+            }
+
+            if (!consent) {
+                setLeadError('Consent is required to submit your details.');
+                return;
+            }
+
+            if (!turnstileToken) {
+                setLeadError('Please complete the bot check.');
+                return;
+            }
+
+            const submitButton = leadForm.querySelector('button[type="submit"]');
+            submitButton.disabled = true;
+
+            try {
+                const response = await fetch('/api/resume-lead', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email,
+                        consent,
+                        source: 'about_resume_cta',
+                        turnstileToken,
+                        companyWebsite: honeypot
+                    })
+                });
+
+                if (!response.ok) {
+                    const payload = await response.json().catch(() => ({}));
+                    if (payload?.error === 'rate_limited') {
+                        throw new Error('Too many attempts. Please try again in a minute.');
+                    }
+                    if (payload?.error === 'bot_check_failed') {
+                        throw new Error('Bot verification failed. Please try again.');
+                    }
+                    throw new Error('Unable to save your email right now.');
+                }
+
+                localStorage.setItem(RESUME_LEAD_STORAGE_KEY, Date.now().toString());
+                closeLeadModal(true);
+            } catch (error) {
+                setLeadError(error.message || 'Submission failed. Please try again.');
+                if (window.turnstile?.reset) {
+                    window.turnstile.reset();
+                }
+            } finally {
+                submitButton.disabled = false;
+            }
+        });
     </script>
 </body>
 
