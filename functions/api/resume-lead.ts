@@ -68,7 +68,7 @@ async function sendTelegramMessage(env: Env, message: string): Promise<void> {
   }
 
   const endpoint = `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`;
-  await fetch(endpoint, {
+  const response = await fetch(endpoint, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({
@@ -77,6 +77,11 @@ async function sendTelegramMessage(env: Env, message: string): Promise<void> {
       disable_web_page_preview: true,
     }),
   });
+
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`telegram_api_error status=${response.status} body=${body}`);
+  }
 }
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {
@@ -161,9 +166,11 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         `- Time: ${now}`,
       ].join("\n");
 
-      sendTelegramMessage(context.env, message).catch((err) => {
-        console.error("telegram_notify_failed", err);
-      });
+      context.waitUntil(
+        sendTelegramMessage(context.env, message).catch((err) => {
+          console.error("telegram_notify_failed", err);
+        })
+      );
     }
 
     return json({ ok: true, status });
