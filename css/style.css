@@ -31,6 +31,11 @@
   color: var(--selection-fg);
 }
 
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 140px;
+}
+
 body {
   font-family: 'JetBrains Mono', monospace;
   background-color: var(--bg);
@@ -260,12 +265,14 @@ a:hover {
   line-height: 1.8;
 }
 
-.hero-desc a {
+.hero-desc a,
+.about-summary a {
   color: var(--fg);
   border-bottom: 1px dashed var(--fg-muted);
 }
 
-.hero-desc a:hover {
+.hero-desc a:hover,
+.about-summary a:hover {
   color: var(--accent);
   border-bottom-color: var(--accent);
 }
@@ -402,6 +409,7 @@ a:hover {
 
 .section {
   margin-bottom: 5rem;
+  scroll-margin-top: 120px;
 }
 
 .section-title {
@@ -426,6 +434,7 @@ a:hover {
 .job {
   margin-bottom: 4rem;
   position: relative;
+  scroll-margin-top: 120px;
 }
 
 .job-header {
@@ -469,8 +478,20 @@ a:hover {
   height: 24px;
   object-fit: contain;
   border-radius: 2px;
-  background-color: var(--bg);
+  background-color: #ffffff;
+  padding: 2px;
   border: 1px solid var(--border);
+}
+
+.job-company-logo-link {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  transition: transform 0.2s ease;
+}
+
+.job-company-logo-link:hover {
+  transform: scale(1.1);
 }
 
 .job-achievements {
@@ -527,6 +548,11 @@ a:hover {
   gap: 1rem;
 }
 
+a.cert-row {
+  text-decoration: none;
+  color: inherit;
+}
+
 .cert-row {
   display: flex;
   justify-content: space-between;
@@ -542,6 +568,21 @@ a:hover {
 .cert-row:hover {
   border-color: var(--accent);
   transform: translateX(10px);
+}
+
+.cert-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1 1 auto;
+}
+
+.cert-logo {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  border-radius: 2px;
 }
 
 .cert-name {
